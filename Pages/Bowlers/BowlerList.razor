@@ -1,0 +1,114 @@
+﻿@page "/bowlers"
+@page "/bowlers/index"
+
+@inherits OwningComponentBase<IBowlingRepo>
+
+<div class="row my-3">
+    <div class="col">
+        <div class="text-center">
+            <h1>@SelectedTeamName</h1>
+        </div>
+    </div>
+</div>
+<div class="row my-3">
+    <div class="col">
+        <select class="custom-select w-50" @bind="TeamID">
+            @if (allTeams != null)
+            {
+                <option value="0">All Teams</option>
+                @foreach (var team in allTeams)
+                {
+                    <option value="@team.TeamID">@team.TeamName</option>
+                }
+            }
+        </select>
+
+        <button class="btn btn-outline-primary ml-3" @onclick="@UpdateData">Apply Filter</button>
+    </div>
+    <div class="col text-right">
+        <NavLink class="btn btn-outline-success" href="/bowlers/add">Add a Bowler</NavLink>
+    </div>
+</div>
+<div class="row my-3">
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>Bowler Name</th>
+                <th>Team</th>
+                <th>Total Pins</th>
+                <th>Current Handicap</th>
+            </tr>
+        </thead>
+        <tbody>
+            @if (Bowlers != null)
+            {
+                @foreach (var Bowler in FilteredBowlers)
+                {
+                    <tr>
+                        <td>@Bowler.BowlerFirstName @Bowler.BowlerLastName</td>
+                        <td>@Bowler.Team.TeamName</td>
+                        <td>@Bowler.BowlerTotalPins</td>
+                        <td>@Bowler.BowlerCurrentHcp</td>
+                        <td><NavLink class="btn btn-sm btn-warning" href="@GetEditLink(Bowler.BowlerID)">Edit</NavLink></td>
+                        <td><button class="btn btn-sm btn-danger" @onclick="@(x => RemoveBowler(Bowler))">Delete</button></td>
+                    </tr>
+                }
+            }
+            else
+            {
+                <tr>
+                    <td colspan="6">Loading Bowlers...</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+
+@code {
+
+    public IBowlingRepo repo => Service;
+
+    public IEnumerable<Bowler> Bowlers { get; set; }
+    public IEnumerable<Bowler> FilteredBowlers { get; set; }
+
+    public IEnumerable<Team> allTeams { get; set; }
+
+    public int TeamID { get; set; }
+    public string SelectedTeamName { get; set; }
+
+    protected async override Task OnInitializedAsync()
+    {
+        await UpdateData();
+    }
+
+    public async Task UpdateData()
+    {
+        Bowlers = await repo.Bowlers.ToListAsync();
+        if (TeamID != 0)
+        {
+            FilteredBowlers = await repo.Bowlers
+                .Where(x => x.Team.TeamID == TeamID)
+                .ToListAsync();
+            SelectedTeamName = repo.Teams
+                .First(x => x.TeamID == TeamID)
+                .TeamName;
+        }
+        else
+        {
+            FilteredBowlers = await repo.Bowlers.ToListAsync();
+            SelectedTeamName = "All Bowlers";
+        }
+        allTeams = await repo.Teams.ToListAsync();
+    }
+
+    public async Task RemoveBowler(Bowler b)
+    {
+        repo.RemoveBowler(b);
+        await UpdateData();
+    }
+
+    public string GetEditLink(int bowlerID)
+    {
+        return "/bowlers/edit/" + bowlerID.ToString();
+    }
+}

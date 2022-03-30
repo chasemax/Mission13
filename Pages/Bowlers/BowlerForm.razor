@@ -1,0 +1,186 @@
+﻿@page "/bowlers/add"
+@page "/bowlers/edit/{id:long}"
+@inherits OwningComponentBase<IBowlingRepo>
+
+<div class="row">
+    <div class="col text-center">
+        <h1>@PageTitle</h1>
+    </div>
+</div>
+<div class="row">
+    <div class="col">
+        <EditForm Model="bowler" OnValidSubmit="SaveBowler">
+
+            <DataAnnotationsValidator></DataAnnotationsValidator>
+
+            <div class="row">
+                <div class="col">
+                    <label>Bowler ID</label>
+                </div>
+                <div class="col">
+                    <input disabled value="@bowler.BowlerID" />
+                </div>
+            </div>
+            <div class="row">
+                <div class="col">
+                    <label>First Name</label>
+                </div>
+                <div class="col">
+                    <InputText @bind-Value="@bowler.BowlerFirstName"></InputText>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col">
+                    <label>Last Name</label>
+                </div>
+                <div class="col">
+                    <InputText @bind-Value="@bowler.BowlerLastName"></InputText>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col">
+                    <label>Middle Initial</label>
+                </div>
+                <div class="col">
+                    <InputText @bind-Value="@bowler.BowlerMiddleInit"></InputText>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col">
+                    <label>Address</label>
+                </div>
+                <div class="col">
+                    <InputText @bind-Value="@bowler.BowlerAddress"></InputText>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col">
+                    <label>City</label>
+                </div>
+                <div class="col">
+                    <InputText @bind-Value="@bowler.BowlerCity"></InputText>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col">
+                    <label>State</label>
+                </div>
+                <div class="col">
+                    <InputText @bind-Value="@bowler.BowlerState"></InputText>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col">
+                    <label>Zip</label>
+                </div>
+                <div class="col">
+                    <InputText @bind-Value="@bowler.BowlerZip"></InputText>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col">
+                    <label>Phone Number</label>
+                </div>
+                <div class="col">
+                    <InputText @bind-Value="@bowler.BowlerPhoneNumber"></InputText>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col">
+                    <label>Team</label>
+                </div>
+                <div class="col">
+                    <CustomInputSelect @bind-Value="bowler.TeamID">
+                        @if (allTeams != null)
+                        {
+                            @foreach (var team in allTeams)
+                            {
+                                <option value="@team.TeamID">@team.TeamName</option>
+                            }
+                        }
+                    </CustomInputSelect>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col">
+                    <label>Total Pins</label>
+                </div>
+                <div class="col">
+                    <InputNumber @bind-Value="@bowler.BowlerTotalPins"></InputNumber>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col">
+                    <label>Games Bowled</label>
+                </div>
+                <div class="col">
+                    <InputNumber @bind-Value="@bowler.BowlerGamesBowled"></InputNumber>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col">
+                    <label>Current Average</label>
+                </div>
+                <div class="col">
+                    <InputNumber @bind-Value="@bowler.BowlerCurrentAverage"></InputNumber>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col">
+                    <label>Current HCP</label>
+                </div>
+                <div class="col">
+                    <InputNumber @bind-Value="@bowler.BowlerCurrentHcp"></InputNumber>
+                </div>
+            </div>
+
+            <button type="submit" class="btn btn-success">Save</button>
+            <NavLink class="btn btn-danger" href="/bowlers">Cancel</NavLink>
+
+        </EditForm>
+    </div>
+</div>
+
+@code {
+
+    public IBowlingRepo repo => Service;
+
+    public Bowler bowler { get; set; } = new Bowler();
+    public IEnumerable<Team> allTeams { get; set; }
+
+    public string PageTitle { get; set; } = "Add Bowler";
+
+    [Parameter]
+    public long Id { get; set; }
+
+    protected override void OnParametersSet()
+    {
+        if (Id != 0)
+        {
+            bowler = repo.Bowlers.FirstOrDefault(x => x.BowlerID == Id);
+            PageTitle = "Edit Bowler";
+        }
+    }
+
+    protected async override Task OnInitializedAsync()
+    {
+        allTeams = await repo.Teams.ToListAsync();
+    }
+
+    public void SaveBowler()
+    {
+        if (Id == 0)
+        {
+            repo.AddBowler(bowler);
+        }
+        else
+        {
+            repo.SaveBowler(bowler);
+        }
+
+        NavManager.NavigateTo("/bowlers");
+    }
+
+    [Inject]
+    public NavigationManager NavManager { get; set; }
+}
